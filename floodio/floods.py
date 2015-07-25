@@ -15,8 +15,14 @@ class Flood(object):
     def __init__(self, response, client=None):
         self._client = client
         self.uuid = response['uuid']
-        self.started = parse(response['started'])
-        self.stopped = parse(response['stopped'])
+        if response['started']:
+            self.started = parse(response['started'])
+        else:
+            self.started = None
+        if response['stopped']:
+            self.stopped = parse(response['stopped'])
+        else:
+            self.stopped = None
         self.grids = []
         for grid in response['_embedded']['grids']:
             self.grids.append(Grid(grid))
@@ -47,10 +53,12 @@ class Flood(object):
 
     def stop(self):
         url = '%s/api/floods/%s/stop' % (self._client._base_url, self.uuid)
-        # TODO: test this
-        raise Exception()
         resp_data = self._client._session.get(url).json()
-        # Update state
+        self.__init__(resp_data, client=self._client)
+
+    def refresh(self):
+        url = '%s/api/floods/%s' % (self._client._base_url, self.uuid)
+        resp_data = self._client._session.get(url).json()
         self.__init__(resp_data, client=self._client)
 
 
