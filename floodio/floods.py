@@ -14,18 +14,21 @@ class Flood(object):
 
     def __init__(self, response, client=None):
         self._client = client
-        self.uuid = response['uuid']
-        if response['started']:
-            self.started = parse(response['started'])
-        else:
-            self.started = None
-        if response['stopped']:
-            self.stopped = parse(response['stopped'])
-        else:
-            self.stopped = None
+        try:
+            self.uuid = response['uuid']
+        except:
+            import pdb; pdb.set_trace()
         self.grids = []
         for grid in response['_embedded']['grids']:
             self.grids.append(Grid(grid))
+        del response['_embedded']
+        del response['_links']
+        for attr, value in response.items():
+            setattr(self, attr, value)
+        if response['started']:
+            self.started = parse(response['started'])
+        if response['stopped']:
+            self.stopped = parse(response['stopped'])
 
     def __repr__(self):
         return "<%s:%s>" % (self.__class__.__name__, self.uuid)
@@ -101,13 +104,34 @@ class Floods(object):
         assert tool in ['jmeter-2.13', 'gatling-2.1.4']
         assert privacy in ['private', 'public']
 
-        # TODO: post the flood
-        self._client._session.post(
-            files=flood_files,
-            data={
-            },
-        )
-        return Flood()
+        data = {
+            'flood[tool]': tool,
+            'flood[privacy]': privacy,
+            'flood_files[]': flood_files,
+        }
+        if name:
+            data['flood[name]'] = name
+        if notes:
+            data['flood[notes]'] = notes
+        if tag_list:
+            data['flood[tag_list]'] = ",".join(tag_list)
+        if threads:
+            data['flood[threads]'] = threads
+        if rampup:
+            data['flood[rampup]'] = rampup
+        if duration:
+            data['flood[duration]'] = duration
+        if override_hosts:
+            data['flood[override_hosts]'] = override_hosts
+        if override_parameters:
+            data['flood[override_parameters]'] = override_parameters
+        if grids:
+            data['flood[grids][][uuid]'] = grids
+
+        url = self._client._base_url + self._endpoint
+        response = self._client._session.post(url, data=data).json()
+        print(response)
+        return Flood(response, client=self._client)
 
     def _next_page(self):
         return self._last_page['_links'].get('next', {}).get('href')
