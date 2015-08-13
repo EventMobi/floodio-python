@@ -10,6 +10,7 @@ class Flood(object):
     def __init__(self, response, client=None):
         self._client = client
         self.grids = []
+        self._status = response.pop('status')
         for grid in response['_embedded']['grids']:
             self.grids.append(Grid(grid))
         del response['_embedded']
@@ -34,6 +35,12 @@ class Flood(object):
     def result(self):
         url = '%s/api/floods/%s/result' % (self._client._base_url, self.uuid)
         return self._client._session.get(url).json()
+
+    @property
+    def status(self):
+        if self._status != 'finished':
+            self.refresh()
+        return self._status
 
     def repeat(self, region=None, grid=None):
         url = '%s/api/floods/%s/repeat' % (self._client._base_url, self.uuid)
