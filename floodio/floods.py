@@ -1,10 +1,5 @@
 # -*- coding: utf-8 -*-
 
-try:
-    import urllib.parse as urlp
-except ImportError:
-    import urlparse as urlp
-
 from dateutil.parser import parse
 
 from .grids import Grid
@@ -14,10 +9,6 @@ class Flood(object):
 
     def __init__(self, response, client=None):
         self._client = client
-        try:
-            self.uuid = response['uuid']
-        except:
-            import pdb; pdb.set_trace()
         self.grids = []
         for grid in response['_embedded']['grids']:
             self.grids.append(Grid(grid))
@@ -82,7 +73,7 @@ class Floods(object):
 
     def __getitem__(self, flood_id):
         endpoint = self._endpoint + '/' + flood_id
-        url = urlp.urljoin(self._client._base_url, endpoint)
+        url = "%s%s" % (self._client._base_url, endpoint)
         flood_resp = self._client._session.get(url).json()
         return Flood(flood_resp, client=self._client)
 
@@ -107,8 +98,8 @@ class Floods(object):
         data = {
             'flood[tool]': tool,
             'flood[privacy]': privacy,
-            'flood_files[]': flood_files,
         }
+        files = self._build_files(flood_files)
         if name:
             data['flood[name]'] = name
         if notes:
@@ -129,16 +120,21 @@ class Floods(object):
             data['flood[grids][][uuid]'] = grids
 
         url = self._client._base_url + self._endpoint
-        response = self._client._session.post(url, data=data).json()
-        print(response)
-        return Flood(response, client=self._client)
+        response = self._client._session.post(url, files=files, data=data)
+        return Flood(response.json(), client=self._client)
+
+    def _build_files(self, flood_files):
+        return [
+            ('flood_files[]', file)
+            for file in flood_files
+        ]
 
     def _next_page(self):
         return self._last_page['_links'].get('next', {}).get('href')
 
     def _get_page(self, link=None):
         """ Get a page of Flood data """
-        url = urlp.urljoin(self._base_url, link or self._endpoint)
+        url = "%s%s" % (self._base_url, link or self._endpoint)
         floods_resp = self._client._session.get(url).json()
         self._last_page = floods_resp
         return floods_resp['_embedded']['floods']
