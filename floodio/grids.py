@@ -36,6 +36,12 @@ class Grids(object):
             raise exc.ResourceNotFound(grid_resp['error'])
         return Grid(grid_resp, client=self._client)
 
+    def all(self):
+        url = '%s%s' % (self._client._base_url, self._endpoint)
+        grids_resp = self._client._session.get(url).json()
+        for grid in grids_resp['_embedded']['grids']:
+            yield Grid(grid)
+
     def create(self, region, infrastructure, account_credential_id,
                instance_quantity, instance_type, stop_after,
                aws_spot_price=None, aws_tags=None, aws_availability_zone=None,

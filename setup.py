@@ -7,7 +7,7 @@ setup(
     name='floodio-python',
     author='Devon Meunier',
     author_email='devon@eventmobi.com',
-    version='0.1',
+    version='0.2-rc2',
     license='MIT',
     description='Flood.io client for Python 2 and 3',
     packages=['floodio'],
