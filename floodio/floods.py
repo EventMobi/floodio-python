@@ -109,19 +109,13 @@ class Floods(object):
             'flood[tool]': tool,
             'flood[privacy]': privacy,
         }
-        files = self._build_files(flood_files)
-        if name:
-            data['flood[name]'] = name
-        if notes:
-            data['flood[notes]'] = notes
+        self._try_set(data, 'name', name)
+        self._try_set(data, 'notes', notes)
+        self._try_set(data, 'threads', threads)
+        self._try_set(data, 'rampup', rampup)
+        self._try_set(data, 'duration', duration)
         if tag_list:
             data['flood[tag_list]'] = ",".join(tag_list)
-        if threads:
-            data['flood[threads]'] = threads
-        if rampup:
-            data['flood[rampup]'] = rampup
-        if duration:
-            data['flood[duration]'] = duration
         if override_hosts:
             data['flood[override_hosts]'] = override_hosts
         if override_parameters:
@@ -129,9 +123,20 @@ class Floods(object):
         if grids:
             data['flood[grids][][uuid]'] = grids
 
+        files = self._build_files(flood_files)
         url = self._client._base_url + self._endpoint
-        response = self._client._session.post(url, files=files, data=data)
-        return Flood(response.json(), client=self._client)
+        response = self._client._session.post(
+            url,
+            files=files,
+            data=data,
+        ).json()
+        if response.get('error'):
+            raise exc.FloodCreationFailed(response['error'])
+        return Flood(response, client=self._client)
+
+    def _try_set(self, data, key, value):
+        if value:
+            data['flood[%s]' % key] = value
 
     def _build_files(self, flood_files):
         return [
