@@ -2,6 +2,7 @@
 
 from dateutil.parser import parse
 
+from . import exc
 from .grids import Grid
 
 
@@ -82,6 +83,8 @@ class Floods(object):
         endpoint = self._endpoint + '/' + flood_id
         url = "%s%s" % (self._client._base_url, endpoint)
         flood_resp = self._client._session.get(url).json()
+        if flood_resp.get('error'):
+            raise exc.ResourceNotFound(flood_resp['error'])
         return Flood(flood_resp, client=self._client)
 
     def all(self):

@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from . import exc
+
 
 class Grid(object):
 
@@ -30,6 +32,8 @@ class Grids(object):
         endpoint = self._endpoint + '/' + grid_id
         url = self._client._base_url + endpoint
         grid_resp = self._client._session.get(url).json()
+        if grid_resp.get('error'):
+            raise exc.ResourceNotFound(grid_resp['error'])
         return Grid(grid_resp, client=self._client)
 
     def create(self, region, infrastructure, account_credential_id,
