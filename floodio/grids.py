@@ -83,4 +83,6 @@ class Grids(object):
             data['grid[aws_vpc_security_groups]'] = aws_vpc_security_groups
 
         grid_resp = self._client._session.post(url, data=data).json()
+        if grid_resp.get('error'):
+            raise exc.GridCreationFailed(grid_resp['error'])
         return Grid(grid_resp, client=self._client)

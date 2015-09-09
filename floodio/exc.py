@@ -5,5 +5,13 @@ class ResourceNotFound(Exception):
     pass
 
 
-class FloodCreationFailed(Exception):
+class ResourceCreationFailed(Exception):
+    pass
+
+
+class FloodCreationFailed(ResourceCreationFailed):
+    pass
+
+
+class GridCreationFailed(ResourceCreationFailed):
     pass
